@@ -2,7 +2,6 @@ import { useState } from "react";
 import "./App.css";
 
 function App() {
-  // Expense form state
   const [showExpensePopup, setShowExpensePopup] = useState(false);
   const [expense, setExpense] = useState({
     name: "",
@@ -11,13 +10,28 @@ function App() {
     amount: "",
   });
 
+  const [expensesList, setExpensesList] = useState([]);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+
   const handleExpenseChange = (e) => {
     setExpense({ ...expense, [e.target.name]: e.target.value });
   };
 
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
-    console.log("Expense Added:", expense);
+
+    if (isEditing) {
+      const updatedList = [...expensesList];
+      updatedList[editIndex] = expense;
+      setExpensesList(updatedList);
+      setIsEditing(false);
+      setEditIndex(null);
+    } else {
+      setExpensesList([...expensesList, expense]);
+    }
+
     setShowExpensePopup(false);
     setExpense({
       name: "",
@@ -27,7 +41,19 @@ function App() {
     });
   };
 
-  // Budget popup state
+  const handleEdit = (index) => {
+    const selected = expensesList[index];
+    setExpense(selected);
+    setEditIndex(index);
+    setIsEditing(true);
+    setShowExpensePopup(true);
+  };
+
+  const handleDelete = (index) => {
+    const updated = expensesList.filter((_, i) => i !== index);
+    setExpensesList(updated);
+  };
+
   const [showBudgetPopup, setShowBudgetPopup] = useState(false);
   const [budgetAmount, setBudgetAmount] = useState("");
 
@@ -91,30 +117,27 @@ function App() {
           <i className="fas fa-heartbeat"></i> Health
         </button>
 
-        {/* Add Budget */}
         <button className="add-budget" onClick={() => setShowBudgetPopup(true)}>
           <i className="fas fa-plus"></i> Add Budget
         </button>
 
-        {/* Add Expenses */}
         <button className="Add-Expenses" onClick={() => setShowExpensePopup(true)}>
           <i className="fas fa-plus"></i> Add Expenses
         </button>
       </div>
 
-      {/* Add Expense Popup */}
+      {/* Add/Edit Expense Popup */}
       {showExpensePopup && (
         <div className="popup-overlay">
           <div className="popup-content">
-            <h3 className="popup-title">Add New Expense</h3>
+            <h3 className="popup-title">
+              {isEditing ? "Edit Expense" : "Add New Expense"}
+            </h3>
             <hr className="popup-divider" />
             <form onSubmit={handleExpenseSubmit}>
-              <label htmlFor="expenseName" style={{ marginBottom: "-5px", display: "block" }}>
-                Expense Name <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Expense Name *</label>
               <input
                 type="text"
-                id="expenseName"
                 name="name"
                 placeholder="Expense Name"
                 value={expense.name}
@@ -122,24 +145,18 @@ function App() {
                 required
               />
 
-              <label htmlFor="expenseDate" style={{ marginBottom: "-5px", display: "block" }}>
-                Date <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Date *</label>
               <input
                 type="date"
-                id="expenseDate"
                 name="date"
                 value={expense.date}
                 onChange={handleExpenseChange}
                 required
               />
 
-              <label htmlFor="expenseCategory" style={{ marginBottom: "-5px", display: "block" }}>
-                Category <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Category *</label>
               <input
                 type="text"
-                id="expenseCategory"
                 name="category"
                 placeholder="Category"
                 value={expense.category}
@@ -147,12 +164,9 @@ function App() {
                 required
               />
 
-              <label htmlFor="expenseAmount" style={{ marginBottom: "-5px", display: "block" }}>
-                Amount <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Amount *</label>
               <input
                 type="number"
-                id="expenseAmount"
                 name="amount"
                 placeholder="Amount"
                 value={expense.amount}
@@ -161,26 +175,25 @@ function App() {
               />
 
               <div className="buttons">
-                <button type="submit">Add Expense</button>
+                <button type="submit">
+                  {isEditing ? "Update Expense" : "Add Expense"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Add Budget Popup */}
+      {/* Budget Popup */}
       {showBudgetPopup && (
         <div className="popup-overlay">
           <div className="popup-content">
             <h3 className="popup-title">Add Budget</h3>
             <hr className="popup-divider" />
             <form onSubmit={handleBudgetSubmit}>
-              <label htmlFor="budgetAmount" style={{ marginBottom: "-5px", display: "block" }}>
-                Amount <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Amount *</label>
               <input
                 type="number"
-                id="budgetAmount"
                 name="amount"
                 placeholder="Amount"
                 value={budgetAmount}
@@ -194,6 +207,47 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Expense Table */}
+      <div className="expense-table-container">
+        <h3>Expenses List</h3>
+        <table className="expense-table">
+          <thead>
+            <tr>
+              <th>Sr. No.</th>
+              <th>Expense</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expensesList.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: "center" }}>
+                  No expenses added yet.
+                </td>
+              </tr>
+            ) : (
+              expensesList.map((exp, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{exp.name}</td>
+                  <td>${exp.amount}</td>
+                  <td>
+                    <button
+                      style={{ marginRight: "8px" }}
+                      onClick={() => handleEdit(index)}
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => handleDelete(index)}>Delete</button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }
