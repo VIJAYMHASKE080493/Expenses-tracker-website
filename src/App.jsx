@@ -11,9 +11,11 @@ function App() {
   });
 
   const [expensesList, setExpensesList] = useState([]);
-
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
 
   const handleExpenseChange = (e) => {
     setExpense({ ...expense, [e.target.name]: e.target.value });
@@ -49,9 +51,21 @@ function App() {
     setShowExpensePopup(true);
   };
 
-  const handleDelete = (index) => {
-    const updated = expensesList.filter((_, i) => i !== index);
+  const handleDeleteClick = (index) => {
+    setDeleteIndex(index);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    const updated = expensesList.filter((_, i) => i !== deleteIndex);
     setExpensesList(updated);
+    setShowDeleteConfirm(false);
+    setDeleteIndex(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteIndex(null);
   };
 
   const [showBudgetPopup, setShowBudgetPopup] = useState(false);
@@ -130,9 +144,7 @@ function App() {
       {showExpensePopup && (
         <div className="popup-overlay">
           <div className="popup-content">
-            <h3 className="popup-title">
-              {isEditing ? "Edit Expense" : "Add New Expense"}
-            </h3>
+            <h3 className="popup-title">{isEditing ? "Edit Expense" : "Add New Expense"}</h3>
             <hr className="popup-divider" />
             <form onSubmit={handleExpenseSubmit}>
               <label>Expense Name *</label>
@@ -159,10 +171,18 @@ function App() {
                 type="text"
                 name="category"
                 placeholder="Category"
+                list="category-options"
                 value={expense.category}
                 onChange={handleExpenseChange}
                 required
               />
+              <datalist id="category-options">
+                <option value="Food Drinks" />
+                <option value="Groceries" />
+                <option value="Travel" />
+                <option value="Health" />
+                <option value="Shopping" />
+              </datalist>
 
               <label>Amount *</label>
               <input
@@ -208,6 +228,69 @@ function App() {
         </div>
       )}
 
+      {/* Delete Confirmation Popup */}
+      {showDeleteConfirm && (
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  width: "60px",
+                  height: "60px",
+                  margin: "0 auto 10px",
+                  borderRadius: "50%",
+                  backgroundColor: "#f8d7da",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "24px",
+                  color: "#721c24",
+                }}
+              >
+                <i className="fa-solid fa-exclamation"></i>
+              </div>
+              <h3 className="popup-title" style={{ color: "#721c24", marginBottom: "10px" }}>
+                Are you sure?
+              </h3>
+              <p>
+                Do you really want to delete this expense:{" "}
+                <strong>{expensesList[deleteIndex]?.name}</strong>?
+              </p>
+              <div
+                className="buttons"
+                style={{ marginTop: "20px", display: "flex", justifyContent: "space-around" }}
+              >
+                <button
+                  onClick={cancelDelete}
+                  style={{
+                    backgroundColor: "#ccc",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  style={{
+                    backgroundColor: "red",
+                    color: "white",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Expense Table */}
       <div className="expense-table-container">
         <h3>Expenses List</h3>
@@ -238,9 +321,11 @@ function App() {
                       style={{ marginRight: "8px" }}
                       onClick={() => handleEdit(index)}
                     >
-                      Edit
+                      <i className="fa-solid fa-pencil"></i> Edit
                     </button>
-                    <button onClick={() => handleDelete(index)}>Delete</button>
+                    <button onClick={() => handleDeleteClick(index)}>
+                      <i className="fa-solid fa-trash"></i> Delete
+                    </button>
                   </td>
                 </tr>
               ))
