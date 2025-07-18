@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
@@ -17,30 +17,54 @@ function App() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
 
+  const [showBudgetPopup, setShowBudgetPopup] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState("");
+
+  const [totalBudget, setTotalBudget] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [remainingBudget, setRemainingBudget] = useState(0);
+
+  // Load from localStorage
+  useEffect(() => {
+    const budget = parseFloat(localStorage.getItem("budget")) || 0;
+    const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+    const totalExp = expenses.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+
+    setTotalBudget(budget);
+    setExpensesList(expenses);
+    setTotalExpense(totalExp);
+    setRemainingBudget(budget - totalExp);
+  }, []);
+
+  // Recalculate totals when expenses change
+  useEffect(() => {
+    const totalExp = expensesList.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    setTotalExpense(totalExp);
+    setRemainingBudget(totalBudget - totalExp);
+    localStorage.setItem("expenses", JSON.stringify(expensesList)); // Save on update
+  }, [expensesList, totalBudget]);
+
   const handleExpenseChange = (e) => {
     setExpense({ ...expense, [e.target.name]: e.target.value });
   };
 
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
+    let updatedList = [];
 
     if (isEditing) {
-      const updatedList = [...expensesList];
+      updatedList = [...expensesList];
       updatedList[editIndex] = expense;
-      setExpensesList(updatedList);
       setIsEditing(false);
       setEditIndex(null);
     } else {
-      setExpensesList([...expensesList, expense]);
+      updatedList = [...expensesList, expense];
     }
 
+    setExpensesList(updatedList);
     setShowExpensePopup(false);
-    setExpense({
-      name: "",
-      date: "",
-      category: "",
-      amount: "",
-    });
+    setExpense({ name: "", date: "", category: "", amount: "" });
   };
 
   const handleEdit = (index) => {
@@ -68,16 +92,15 @@ function App() {
     setDeleteIndex(null);
   };
 
-  const [showBudgetPopup, setShowBudgetPopup] = useState(false);
-  const [budgetAmount, setBudgetAmount] = useState("");
-
   const handleBudgetChange = (e) => {
     setBudgetAmount(e.target.value);
   };
 
   const handleBudgetSubmit = (e) => {
     e.preventDefault();
-    console.log("Budget Added:", budgetAmount);
+    localStorage.setItem("budget", budgetAmount); // Save to localStorage
+    setTotalBudget(parseFloat(budgetAmount));
+    setRemainingBudget(parseFloat(budgetAmount) - totalExpense);
     setShowBudgetPopup(false);
     setBudgetAmount("");
   };
@@ -94,21 +117,23 @@ function App() {
         <h1>Hello, Vijay Mhaske</h1>
       </div>
 
+      {/* Budget Summary */}
       <div className="ExpensesName">
         <div className="T-Budge">
           <p>Total Budget</p>
-          <h2>$20,000</h2>
+          <h2>${totalBudget.toLocaleString()}</h2>
         </div>
         <div className="T-Expense">
           <p>Total Expense</p>
-          <h2>$12,205</h2>
+          <h2>${totalExpense.toLocaleString()}</h2>
         </div>
         <div className="Remaninig-B">
           <p>Remaining Budget</p>
-          <h2>$7,795</h2>
+          <h2>${remainingBudget.toLocaleString()}</h2>
         </div>
       </div>
 
+      {/* Categories + Add Buttons */}
       <div className="Categaries">
         <div className="search-box">
           <i className="fas fa-search"></i>
@@ -156,7 +181,6 @@ function App() {
                 onChange={handleExpenseChange}
                 required
               />
-
               <label>Date *</label>
               <input
                 type="date"
@@ -165,7 +189,6 @@ function App() {
                 onChange={handleExpenseChange}
                 required
               />
-
               <label>Category *</label>
               <input
                 type="text"
@@ -183,7 +206,6 @@ function App() {
                 <option value="Health" />
                 <option value="Shopping" />
               </datalist>
-
               <label>Amount *</label>
               <input
                 type="number"
@@ -193,18 +215,15 @@ function App() {
                 onChange={handleExpenseChange}
                 required
               />
-
               <div className="buttons">
-                <button type="submit">
-                  {isEditing ? "Update Expense" : "Add Expense"}
-                </button>
+                <button type="submit">{isEditing ? "Update Expense" : "Add Expense"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Budget Popup */}
+      {/* Add Budget Popup */}
       {showBudgetPopup && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -317,10 +336,7 @@ function App() {
                   <td>{exp.name}</td>
                   <td>${exp.amount}</td>
                   <td>
-                    <button
-                      style={{ marginRight: "8px" }}
-                      onClick={() => handleEdit(index)}
-                    >
+                    <button style={{ marginRight: "8px" }} onClick={() => handleEdit(index)}>
                       <i className="fa-solid fa-pencil"></i> Edit
                     </button>
                     <button onClick={() => handleDeleteClick(index)}>
