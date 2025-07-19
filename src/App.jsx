@@ -24,7 +24,9 @@ function App() {
   const [totalExpense, setTotalExpense] = useState(0);
   const [remainingBudget, setRemainingBudget] = useState(0);
 
-  // Load from localStorage
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     const budget = parseFloat(localStorage.getItem("budget")) || 0;
     const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
@@ -37,12 +39,11 @@ function App() {
     setRemainingBudget(budget - totalExp);
   }, []);
 
-  // Recalculate totals when expenses change
   useEffect(() => {
     const totalExp = expensesList.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
     setTotalExpense(totalExp);
     setRemainingBudget(totalBudget - totalExp);
-    localStorage.setItem("expenses", JSON.stringify(expensesList)); // Save on update
+    localStorage.setItem("expenses", JSON.stringify(expensesList));
   }, [expensesList, totalBudget]);
 
   const handleExpenseChange = (e) => {
@@ -96,14 +97,34 @@ function App() {
     setBudgetAmount(e.target.value);
   };
 
+  // ✅ UPDATED: Add to existing budget
   const handleBudgetSubmit = (e) => {
     e.preventDefault();
-    localStorage.setItem("budget", budgetAmount); // Save to localStorage
-    setTotalBudget(parseFloat(budgetAmount));
-    setRemainingBudget(parseFloat(budgetAmount) - totalExpense);
+
+    const newBudget = parseFloat(budgetAmount);
+    if (isNaN(newBudget) || newBudget <= 0) return;
+
+    const updatedBudget = totalBudget + newBudget;
+
+    localStorage.setItem("budget", updatedBudget);
+    setTotalBudget(updatedBudget);
+    setRemainingBudget(updatedBudget - totalExpense);
+
     setShowBudgetPopup(false);
     setBudgetAmount("");
   };
+
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+  };
+
+  const filteredExpenses = expensesList.filter((exp) => {
+    const matchesCategory = selectedCategory === "All" || exp.category === selectedCategory;
+    const matchesSearch =
+      exp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exp.category.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <>
@@ -117,7 +138,6 @@ function App() {
         <h1>Hello, Vijay Mhaske</h1>
       </div>
 
-      {/* Budget Summary */}
       <div className="ExpensesName">
         <div className="T-Budge">
           <p>Total Budget</p>
@@ -133,26 +153,30 @@ function App() {
         </div>
       </div>
 
-      {/* Categories + Add Buttons */}
       <div className="Categaries">
         <div className="search-box">
           <i className="fas fa-search"></i>
-          <input type="text" placeholder="Search" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
-        <button className="active">
+        <button className={selectedCategory === "All" ? "active" : ""} onClick={() => handleCategoryClick("All")}>
           <i className="fas fa-list"></i> All Expenses
         </button>
-        <button>
+        <button className={selectedCategory === "Food Drinks" ? "active" : ""} onClick={() => handleCategoryClick("Food Drinks")}>
           <i className="fa-solid fa-pizza-slice"></i> Food Drinks
         </button>
-        <button>
+        <button className={selectedCategory === "Groceries" ? "active" : ""} onClick={() => handleCategoryClick("Groceries")}>
           <i className="fa-solid fa-bag-shopping"></i> Groceries
         </button>
-        <button>
+        <button className={selectedCategory === "Travel" ? "active" : ""} onClick={() => handleCategoryClick("Travel")}>
           <i className="fa-solid fa-suitcase-rolling"></i> Travel
         </button>
-        <button>
+        <button className={selectedCategory === "Health" ? "active" : ""} onClick={() => handleCategoryClick("Health")}>
           <i className="fas fa-heartbeat"></i> Health
         </button>
 
@@ -165,7 +189,6 @@ function App() {
         </button>
       </div>
 
-      {/* Add/Edit Expense Popup */}
       {showExpensePopup && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -173,22 +196,9 @@ function App() {
             <hr className="popup-divider" />
             <form onSubmit={handleExpenseSubmit}>
               <label>Expense Name *</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Expense Name"
-                value={expense.name}
-                onChange={handleExpenseChange}
-                required
-              />
+              <input type="text" name="name" placeholder="Expense Name" value={expense.name} onChange={handleExpenseChange} required />
               <label>Date *</label>
-              <input
-                type="date"
-                name="date"
-                value={expense.date}
-                onChange={handleExpenseChange}
-                required
-              />
+              <input type="date" name="date" value={expense.date} onChange={handleExpenseChange} required />
               <label>Category *</label>
               <input
                 type="text"
@@ -204,17 +214,9 @@ function App() {
                 <option value="Groceries" />
                 <option value="Travel" />
                 <option value="Health" />
-                <option value="Shopping" />
               </datalist>
               <label>Amount *</label>
-              <input
-                type="number"
-                name="amount"
-                placeholder="Amount"
-                value={expense.amount}
-                onChange={handleExpenseChange}
-                required
-              />
+              <input type="number" name="amount" placeholder="Amount" value={expense.amount} onChange={handleExpenseChange} required />
               <div className="buttons">
                 <button type="submit">{isEditing ? "Update Expense" : "Add Expense"}</button>
               </div>
@@ -223,7 +225,6 @@ function App() {
         </div>
       )}
 
-      {/* Add Budget Popup */}
       {showBudgetPopup && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -247,7 +248,6 @@ function App() {
         </div>
       )}
 
-      {/* Delete Confirmation Popup */}
       {showDeleteConfirm && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -275,33 +275,11 @@ function App() {
                 Do you really want to delete this expense:{" "}
                 <strong>{expensesList[deleteIndex]?.name}</strong>?
               </p>
-              <div
-                className="buttons"
-                style={{ marginTop: "20px", display: "flex", justifyContent: "space-around" }}
-              >
-                <button
-                  onClick={cancelDelete}
-                  style={{
-                    backgroundColor: "#ccc",
-                    padding: "10px 20px",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
+              <div className="buttons" style={{ marginTop: "20px", display: "flex", justifyContent: "space-around" }}>
+                <button onClick={cancelDelete} style={{ backgroundColor: "#ccc", padding: "10px 20px", border: "none", borderRadius: "5px", cursor: "pointer" }}>
                   Cancel
                 </button>
-                <button
-                  onClick={confirmDelete}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    padding: "10px 20px",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
+                <button onClick={confirmDelete} style={{ backgroundColor: "red", color: "white", padding: "10px 20px", border: "none", borderRadius: "5px", cursor: "pointer" }}>
                   Delete
                 </button>
               </div>
@@ -310,7 +288,6 @@ function App() {
         </div>
       )}
 
-      {/* Expense Table */}
       <div className="expense-table-container">
         <h3>Expenses List</h3>
         <table className="expense-table">
@@ -323,14 +300,14 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {expensesList.length === 0 ? (
+            {filteredExpenses.length === 0 ? (
               <tr>
                 <td colSpan="4" style={{ textAlign: "center" }}>
-                  No expenses added yet.
+                  No expenses found for this category.
                 </td>
               </tr>
             ) : (
-              expensesList.map((exp, index) => (
+              filteredExpenses.map((exp, index) => (
                 <tr key={index}>
                   <td>{index + 1}</td>
                   <td>{exp.name}</td>
