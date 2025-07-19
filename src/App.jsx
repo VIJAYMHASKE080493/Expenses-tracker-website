@@ -31,7 +31,10 @@ function App() {
     const budget = parseFloat(localStorage.getItem("budget")) || 0;
     const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
-    const totalExp = expenses.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    const totalExp = expenses.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
 
     setTotalBudget(budget);
     setExpensesList(expenses);
@@ -40,7 +43,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const totalExp = expensesList.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    const totalExp = expensesList.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
     setTotalExpense(totalExp);
     setRemainingBudget(totalBudget - totalExp);
     localStorage.setItem("expenses", JSON.stringify(expensesList));
@@ -119,7 +125,8 @@ function App() {
   };
 
   const filteredExpenses = expensesList.filter((exp) => {
-    const matchesCategory = selectedCategory === "All" || exp.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "All" || exp.category === selectedCategory;
     const matchesSearch =
       exp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exp.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -164,19 +171,34 @@ function App() {
           />
         </div>
 
-        <button className={selectedCategory === "All" ? "active" : ""} onClick={() => handleCategoryClick("All")}>
+        <button
+          className={selectedCategory === "All" ? "active" : ""}
+          onClick={() => handleCategoryClick("All")}
+        >
           <i className="fas fa-list"></i> All Expenses
         </button>
-        <button className={selectedCategory === "Food Drinks" ? "active" : ""} onClick={() => handleCategoryClick("Food Drinks")}>
+        <button
+          className={selectedCategory === "Food Drinks" ? "active" : ""}
+          onClick={() => handleCategoryClick("Food Drinks")}
+        >
           <i className="fa-solid fa-pizza-slice"></i> Food Drinks
         </button>
-        <button className={selectedCategory === "Groceries" ? "active" : ""} onClick={() => handleCategoryClick("Groceries")}>
+        <button
+          className={selectedCategory === "Groceries" ? "active" : ""}
+          onClick={() => handleCategoryClick("Groceries")}
+        >
           <i className="fa-solid fa-bag-shopping"></i> Groceries
         </button>
-        <button className={selectedCategory === "Travel" ? "active" : ""} onClick={() => handleCategoryClick("Travel")}>
+        <button
+          className={selectedCategory === "Travel" ? "active" : ""}
+          onClick={() => handleCategoryClick("Travel")}
+        >
           <i className="fa-solid fa-suitcase-rolling"></i> Travel
         </button>
-        <button className={selectedCategory === "Health" ? "active" : ""} onClick={() => handleCategoryClick("Health")}>
+        <button
+          className={selectedCategory === "Health" ? "active" : ""}
+          onClick={() => handleCategoryClick("Health")}
+        >
           <i className="fas fa-heartbeat"></i> Health
         </button>
 
@@ -184,7 +206,10 @@ function App() {
           <i className="fas fa-plus"></i> Add Budget
         </button>
 
-        <button className="Add-Expenses" onClick={() => setShowExpensePopup(true)}>
+        <button
+          className="Add-Expenses"
+          onClick={() => setShowExpensePopup(true)}
+        >
           <i className="fas fa-plus"></i> Add Expenses
         </button>
       </div>
@@ -192,13 +217,34 @@ function App() {
       {showExpensePopup && (
         <div className="popup-overlay">
           <div className="popup-content">
-            <h3 className="popup-title">{isEditing ? "Edit Expense" : "Add New Expense"}</h3>
+            {/* Close Icon */}
+            <i
+              className="fa-solid fa-xmark close-icon"
+              onClick={() => setShowExpensePopup(false)}
+            ></i>
+
+            <h3 className="popup-title">
+              {isEditing ? "Edit Expense" : "Add New Expense"}
+            </h3>
             <hr className="popup-divider" />
             <form onSubmit={handleExpenseSubmit}>
               <label>Expense Name *</label>
-              <input type="text" name="name" placeholder="Expense Name" value={expense.name} onChange={handleExpenseChange} required />
+              <input
+                type="text"
+                name="name"
+                placeholder="Expense Name"
+                value={expense.name}
+                onChange={handleExpenseChange}
+                required
+              />
               <label>Date *</label>
-              <input type="date" name="date" value={expense.date} onChange={handleExpenseChange} required />
+              <input
+                type="date"
+                name="date"
+                value={expense.date}
+                onChange={handleExpenseChange}
+                required
+              />
               <label>Category *</label>
               <input
                 type="text"
@@ -216,9 +262,18 @@ function App() {
                 <option value="Health" />
               </datalist>
               <label>Amount *</label>
-              <input type="number" name="amount" placeholder="Amount" value={expense.amount} onChange={handleExpenseChange} required />
+              <input
+                type="number"
+                name="amount"
+                placeholder="Amount"
+                value={expense.amount}
+                onChange={handleExpenseChange}
+                required
+              />
               <div className="buttons">
-                <button type="submit">{isEditing ? "Update Expense" : "Add Expense"}</button>
+                <button type="submit">
+                  {isEditing ? "Update Expense" : "Add Expense"}
+                </button>
               </div>
             </form>
           </div>
@@ -228,6 +283,12 @@ function App() {
       {showBudgetPopup && (
         <div className="popup-overlay">
           <div className="popup-content">
+            {/* Close Icon */}
+            <i
+              className="fa-solid fa-xmark close-icon"
+              onClick={() => setShowBudgetPopup(false)}
+            ></i>
+
             <h3 className="popup-title">Add Budget</h3>
             <hr className="popup-divider" />
             <form onSubmit={handleBudgetSubmit}>
@@ -268,18 +329,47 @@ function App() {
               >
                 <i className="fa-solid fa-exclamation"></i>
               </div>
-              <h3 className="popup-title" style={{ color: "#721c24", marginBottom: "10px" }}>
+              <h3
+                className="popup-title"
+                style={{ color: "#721c24", marginBottom: "10px" }}
+              >
                 Are you sure?
               </h3>
               <p>
                 Do you really want to delete this expense:{" "}
                 <strong>{expensesList[deleteIndex]?.name}</strong>?
               </p>
-              <div className="buttons" style={{ marginTop: "20px", display: "flex", justifyContent: "space-around" }}>
-                <button onClick={cancelDelete} style={{ backgroundColor: "#ccc", padding: "10px 20px", border: "none", borderRadius: "5px", cursor: "pointer" }}>
+              <div
+                className="buttons"
+                style={{
+                  marginTop: "20px",
+                  display: "flex",
+                  justifyContent: "space-around",
+                }}
+              >
+                <button
+                  onClick={cancelDelete}
+                  style={{
+                    backgroundColor: "#ccc",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
                   Cancel
                 </button>
-                <button onClick={confirmDelete} style={{ backgroundColor: "red", color: "white", padding: "10px 20px", border: "none", borderRadius: "5px", cursor: "pointer" }}>
+                <button
+                  onClick={confirmDelete}
+                  style={{
+                    backgroundColor: "red",
+                    color: "white",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
                   Delete
                 </button>
               </div>
@@ -313,7 +403,10 @@ function App() {
                   <td>{exp.name}</td>
                   <td>${exp.amount}</td>
                   <td>
-                    <button style={{ marginRight: "8px" }} onClick={() => handleEdit(index)}>
+                    <button
+                      style={{ marginRight: "8px" }}
+                      onClick={() => handleEdit(index)}
+                    >
                       <i className="fa-solid fa-pencil"></i> Edit
                     </button>
                     <button onClick={() => handleDeleteClick(index)}>
