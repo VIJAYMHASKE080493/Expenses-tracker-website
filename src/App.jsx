@@ -1,4 +1,17 @@
 import { useEffect, useState } from "react";
+import {
+  PieChart,
+  Pie,
+  Tooltip,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 import "./App.css";
 
 function App() {
@@ -10,7 +23,16 @@ function App() {
     amount: "",
   });
 
-  const [expensesList, setExpensesList] = useState([]);
+  const [expensesList, setExpensesList] = useState(() => {
+    const storedExpenses = localStorage.getItem("expenses");
+    return storedExpenses ? JSON.parse(storedExpenses) : [];
+  });
+
+  const [totalBudget, setTotalBudget] = useState(() => {
+    const storedBudget = localStorage.getItem("budget");
+    return storedBudget ? parseFloat(storedBudget) : 0;
+  });
+
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
@@ -20,27 +42,11 @@ function App() {
   const [showBudgetPopup, setShowBudgetPopup] = useState(false);
   const [budgetAmount, setBudgetAmount] = useState("");
 
-  const [totalBudget, setTotalBudget] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [remainingBudget, setRemainingBudget] = useState(0);
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    const budget = parseFloat(localStorage.getItem("budget")) || 0;
-    const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-
-    const totalExp = expenses.reduce(
-      (sum, item) => sum + parseFloat(item.amount || 0),
-      0
-    );
-
-    setTotalBudget(budget);
-    setExpensesList(expenses);
-    setTotalExpense(totalExp);
-    setRemainingBudget(budget - totalExp);
-  }, []);
 
   useEffect(() => {
     const totalExp = expensesList.reduce(
@@ -49,7 +55,6 @@ function App() {
     );
     setTotalExpense(totalExp);
     setRemainingBudget(totalBudget - totalExp);
-    localStorage.setItem("expenses", JSON.stringify(expensesList));
   }, [expensesList, totalBudget]);
 
   const handleExpenseChange = (e) => {
@@ -70,15 +75,15 @@ function App() {
     }
 
     setExpensesList(updatedList);
+    localStorage.setItem("expenses", JSON.stringify(updatedList));
     setShowExpensePopup(false);
     setExpense({ name: "", date: "", category: "", amount: "" });
   };
 
   const handleEdit = (index) => {
-    const selected = expensesList[index];
-    setExpense(selected);
-    setEditIndex(index);
+    setExpense(expensesList[index]);
     setIsEditing(true);
+    setEditIndex(index);
     setShowExpensePopup(true);
   };
 
@@ -90,6 +95,7 @@ function App() {
   const confirmDelete = () => {
     const updated = expensesList.filter((_, i) => i !== deleteIndex);
     setExpensesList(updated);
+    localStorage.setItem("expenses", JSON.stringify(updated));
     setShowDeleteConfirm(false);
     setDeleteIndex(null);
   };
@@ -103,7 +109,6 @@ function App() {
     setBudgetAmount(e.target.value);
   };
 
-  // ✅ UPDATED: Add to existing budget
   const handleBudgetSubmit = (e) => {
     e.preventDefault();
 
@@ -111,7 +116,6 @@ function App() {
     if (isNaN(newBudget) || newBudget <= 0) return;
 
     const updatedBudget = totalBudget + newBudget;
-
     localStorage.setItem("budget", updatedBudget);
     setTotalBudget(updatedBudget);
     setRemainingBudget(updatedBudget - totalExpense);
@@ -133,8 +137,22 @@ function App() {
     return matchesCategory && matchesSearch;
   });
 
+  // ✅ Pie chart data by category
+  const chartData = filteredExpenses.reduce((acc, curr) => {
+    const found = acc.find((item) => item.name === curr.category);
+    if (found) {
+      found.value += parseFloat(curr.amount);
+    } else {
+      acc.push({ name: curr.category, value: parseFloat(curr.amount) });
+    }
+    return acc;
+  }, []);
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#FF6666"];
+
   return (
     <>
+      {/* Header */}
       <div className="header">
         <header>
           <h3>Expense Tracker</h3>
@@ -145,6 +163,7 @@ function App() {
         <h1>Hello, Vijay Mhaske</h1>
       </div>
 
+      {/* Budget Info */}
       <div className="ExpensesName">
         <div className="T-Budge">
           <p>Total Budget</p>
@@ -160,6 +179,7 @@ function App() {
         </div>
       </div>
 
+      {/* Category & Search */}
       <div className="Categaries">
         <div className="search-box">
           <i className="fas fa-search"></i>
@@ -214,15 +234,107 @@ function App() {
         </button>
       </div>
 
+      {/* Expense Table */}
+      <div className="expense-table-container">
+        <h3>Expenses List</h3>
+        <table className="expense-table">
+          <thead>
+            <tr>
+              <th>Sr. No.</th>
+              <th>Expense</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredExpenses.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: "center" }}>
+                  No expenses found for this category.
+                </td>
+              </tr>
+            ) : (
+              filteredExpenses.map((exp, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{exp.name}</td>
+                  <td>${exp.amount}</td>
+                  <td>
+                    <button onClick={() => handleEdit(index)}>Edit</button>
+                    <button onClick={() => handleDeleteClick(index)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ✅ Pie Chart Section */}
+      {chartData.length > 0 && (
+        <div style={{ width: "100%", height: 300, marginTop: "30px" }}>
+          <h3 style={{ textAlign: "center" }}>
+            Expense Distribution by Category
+          </h3>
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                label
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ✅ Dynamic Bar Chart Section */}
+      {chartData.length > 0 && (
+        <div style={{ width: "100%", height: 300, marginTop: "40px" }}>
+          <h3 style={{ textAlign: "center" }}>
+            Expense Amount by Category (Bar Chart)
+          </h3>
+          <ResponsiveContainer>
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              barCategoryGap="10%"
+              barGap={4}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#82ca9d" name="Amount" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {/* Popup Modals (same as your code, not changed) */}
+      {/* Expense Popup */}
       {showExpensePopup && (
         <div className="popup-overlay">
           <div className="popup-content">
-            {/* Close Icon */}
             <i
               className="fa-solid fa-xmark close-icon"
               onClick={() => setShowExpensePopup(false)}
             ></i>
-
             <h3 className="popup-title">
               {isEditing ? "Edit Expense" : "Add New Expense"}
             </h3>
@@ -280,15 +392,14 @@ function App() {
         </div>
       )}
 
+      {/* Budget Popup */}
       {showBudgetPopup && (
         <div className="popup-overlay">
           <div className="popup-content">
-            {/* Close Icon */}
             <i
               className="fa-solid fa-xmark close-icon"
               onClick={() => setShowBudgetPopup(false)}
             ></i>
-
             <h3 className="popup-title">Add Budget</h3>
             <hr className="popup-divider" />
             <form onSubmit={handleBudgetSubmit}>
@@ -309,6 +420,7 @@ function App() {
         </div>
       )}
 
+      {/* Delete Confirm Popup */}
       {showDeleteConfirm && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -329,10 +441,7 @@ function App() {
               >
                 <i className="fa-solid fa-exclamation"></i>
               </div>
-              <h3
-                className="popup-title"
-                style={{ color: "#721c24", marginBottom: "10px" }}
-              >
+              <h3 className="popup-title" style={{ color: "#721c24" }}>
                 Are you sure?
               </h3>
               <p>
@@ -347,28 +456,10 @@ function App() {
                   justifyContent: "space-around",
                 }}
               >
-                <button
-                  onClick={cancelDelete}
-                  style={{
-                    backgroundColor: "#ccc",
-                    padding: "10px 20px",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
+                <button onClick={cancelDelete}>Cancel</button>
                 <button
                   onClick={confirmDelete}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    padding: "10px 20px",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
+                  style={{ backgroundColor: "red", color: "white" }}
                 >
                   Delete
                 </button>
@@ -377,48 +468,6 @@ function App() {
           </div>
         </div>
       )}
-
-      <div className="expense-table-container">
-        <h3>Expenses List</h3>
-        <table className="expense-table">
-          <thead>
-            <tr>
-              <th>Sr. No.</th>
-              <th>Expense</th>
-              <th>Amount</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredExpenses.length === 0 ? (
-              <tr>
-                <td colSpan="4" style={{ textAlign: "center" }}>
-                  No expenses found for this category.
-                </td>
-              </tr>
-            ) : (
-              filteredExpenses.map((exp, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{exp.name}</td>
-                  <td>${exp.amount}</td>
-                  <td>
-                    <button
-                      style={{ marginRight: "8px" }}
-                      onClick={() => handleEdit(index)}
-                    >
-                      <i className="fa-solid fa-pencil"></i> Edit
-                    </button>
-                    <button onClick={() => handleDeleteClick(index)}>
-                      <i className="fa-solid fa-trash"></i> Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
     </>
   );
 }
