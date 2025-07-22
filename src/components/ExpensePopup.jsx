@@ -2,7 +2,9 @@ function ExpensePopup({ expense, onChange, onSubmit, onClose, isEditing }) {
   return (
     <div className="popup-overlay">
       <div className="popup-content">
-        <i className="fa-solid fa-xmark close-icon" onClick={onClose}></i>
+        <div className="icon-cotainer">
+          <i className="fa-solid fa-xmark close-icon" onClick={onClose}></i>
+        </div>
         <h3 className="popup-title">
           {isEditing ? "Edit Expense" : "Add New Expense"}
         </h3>

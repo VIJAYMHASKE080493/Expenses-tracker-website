@@ -165,7 +165,7 @@ function App() {
           budget={{ amount: budgetAmount }}
           onChange={handleBudgetChange}
           onSubmit={handleBudgetSubmit}
-          onClose={() => setShowBudgetPopup(false)}
+          onClose={() =>  (false)}
         />
       )}
       {showDeleteConfirm && (

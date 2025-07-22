@@ -2,10 +2,9 @@ function BudgetPopup({ budgetAmount, onChange, onSubmit, onClose }) {
   return (
     <div className="popup-overlay">
       <div className="popup-content">
-        <i
-          className="fa-solid fa-xmark close-icon"
-          onClick={onClose}
-        ></i>
+        <div className="icon-cotainer">
+          <i className="fa-solid fa-xmark close-icon" onClick={onClose}></i>
+        </div>
         <h3 className="popup-title">Add Budget</h3>
         <hr className="popup-divider" />
         <form onSubmit={onSubmit}>
