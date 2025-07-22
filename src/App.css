@@ -136,7 +136,8 @@
 
 .search-box {
   position: relative;
-  /* width: 250px; */
+  width: 100%;
+  max-width: 300px; /* or adjust as needed */
 }
 
 .search-box i {
@@ -144,15 +145,19 @@
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  color: #999;
+  color: #888;
+  font-size: 16px;
 }
 
 .search-box input {
   width: 100%;
-  padding: 8px 8px 8px 35px; /* Make space for the icon */
+  padding: 8px 12px 8px 35px; /* left padding for icon space */
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
 }
+
 
 .active,
 .add-budget,
@@ -284,3 +289,15 @@ button.active {
 .icon-cotainer {
 text-align: end;
 }
+
+/* .chart-container {
+  display: flex;
+  gap: 30px;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.chart-box {
+  flex: 1;
+  min-width: 300px;
+  height: 300px;
+} */

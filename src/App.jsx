@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import BudgetSummary from "./components/BudgetSummary";
 import CategoryFilter from "./components/CategoryFilter";
-import ExpenseChart from "./components/ExpenseChart";
-import BarChartView from "./components/BarChartView";
+import ExpenseCharts from "./components/ExpenseChart";
 import ExpenseTable from "./components/ExpenseTable";
 import ExpensePopup from "./components/ExpensePopup";
 import BudgetPopup from "./components/BudgetPopup";
@@ -144,8 +143,7 @@ function App() {
         onAddBudget={() => setShowBudgetPopup(true)}
         onAddExpense={() => setShowExpensePopup(true)}
       />
-      {chartData.length > 0 && <ExpenseChart chartData={chartData} />}
-      {chartData.length > 0 && <BarChartView chartData={chartData} />}
+      {chartData.length > 0 && <ExpenseCharts chartData={chartData} />}
       <ExpenseTable
         expenses={filteredExpenses}
         onEdit={handleEdit}
@@ -165,7 +163,7 @@ function App() {
           budget={{ amount: budgetAmount }}
           onChange={handleBudgetChange}
           onSubmit={handleBudgetSubmit}
-          onClose={() =>  (false)}
+          onClose={() => setShowBudgetPopup(false)}
         />
       )}
       {showDeleteConfirm && (
